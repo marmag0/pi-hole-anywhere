@@ -16,3 +16,11 @@ services:
     volumes:
       - "./etc-pihole:/etc/pihole"
     restart: unless-stopped
+
+cloudflared:
+  image: cloudflare/cloudflared:latest
+  container_name: cloudflared-tunnel
+  restart: unless-stopped
+  command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+  depends_on:
+    - pihole
