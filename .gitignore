@@ -1,0 +1,33 @@
+# Environment Variables & Secretsc
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# macOS Specific Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon_
+._*
+
+# Files that might be created on external drives or network shares
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.fseventsd
+
+# VS Code specific files
+.vscode/
+*.code-workspace
+
+# Docker desktop specific files
+.docker/
+
+# Logs and temporary files
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
