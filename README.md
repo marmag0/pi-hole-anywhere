@@ -39,10 +39,10 @@ For more information about **Cloudflare Mesh**, refer to its [official documenta
 ### Deploying Pi-hole with Docker
 
 1. Make sure that Docker is running.
-2. Set up environment variables inside `.env` file:
-   - `API_PASSWORD` - password used to access Pi-hole dashboard, make sure it's strong
-   - `LOCAL_IP` - local IP address of your server
-   - `MESH_IP` - mesh IP address of your server
+2. Set up environment variables inside the `.env` file:
+   - `API_PASSWORD` - password used to access the Pi-hole dashboard; make sure it is strong.
+   - `LOCAL_IP` - local IP address of your server.
+   - `MESH_IP` - mesh IP address of your server.
 
 ```bash
 API_PASSWORD=superHardPasswd
@@ -51,17 +51,20 @@ MESH_IP=yourPiHoleServerIpInMeshNetwork
 ```
 
 3. Deploy Pi-hole using the provided script and follow its instructions if they occur (recommended):
-   - `./deploy.sh` - standard deployment, with logs displayed in terminal (you can always switch it to detached mode by pressing `d`)
-   - `./deploy.sh -d` - detached deployment
+   - `./deploy.sh` - standard deployment, with logs displayed in the terminal (you can always switch it to detached mode by pressing `d`).
+   - `./deploy.sh -d` - detached deployment.
+   - Scripts must remain in the same folder as the `docker-compose.yml` file.
 
-4. You can also run that by yourself using:
+4. You can also run this yourself using:
    - `docker compose up`
-   - `docker compose up -d` - consider adding `-d` to don't block terminal with docker logs
+   - `docker compose up -d` - consider adding `-d` so Docker does not block the terminal with logs.
 
 5. Verify that Pi-hole is working:
-   - Check that Pi-hole web interface is accessible from both your local IP and Mesh IP.
+   - Check that the Pi-hole web interface is accessible from both your local IP and Mesh IP.
    - If something goes wrong, check logs by attaching to the container: `docker compose attach pi-hole`.
-     - refer to [TODO]() for futher troubleshooting info...
+     - Refer to [Cleanup & Troubleshooting](https://github.com/marmag0/pi-hole-anywhere#cleanup--troubleshooting) for further troubleshooting info.
+
+![Pi-hole web UI logging screen](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-login.png)
 
 ### Accessing Pi-hole via URL (optional)
 
@@ -72,9 +75,10 @@ MESH_IP=yourPiHoleServerIpInMeshNetwork
 
 1. ...
 
-### Clean up & Troubleshooting
+### Cleanup & Troubleshooting
 
-1. ...
+- `docker compose down` - stop Pi-hole while preserving existing configuration.
+- `./cleanup.sh` - script for full cleanup of Pi-hole. It stops the service and removes all saved data (good for hard resets).
 
 ## Extra
 
@@ -82,11 +86,11 @@ MESH_IP=yourPiHoleServerIpInMeshNetwork
 
 ...
 
-### Easy CLI Blacklisting and Whitelisting
+### Rolling out a Backup
 
 ...
 
-### TODO
+### Easy CLI Blacklisting and Whitelisting
 
 ...
 
