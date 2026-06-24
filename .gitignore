@@ -16,6 +16,8 @@ Icon_
 .Trashes
 .VolumeIcon.icns
 .fseventsd
+etc-pihole/
+backup/
 
 # VS Code specific files
 .vscode/

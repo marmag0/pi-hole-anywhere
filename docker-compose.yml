@@ -1,5 +1,5 @@
 services:
-  pi-hole:
+  pihole:
     container_name: pihole
     image: pihole/pihole:latest
     ports:
