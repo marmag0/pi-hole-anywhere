@@ -69,7 +69,15 @@ MESH_IP=yourPiHoleServerIpInMeshNetwork
 ### Accessing Pi-hole via URL (optional)
 
 1. To perform this step, **you'll need a domain name you control**.
-2. ...
+2. Navigate to your domain's panel in Cloudflare, and add a `DNS A record` pointing to the Mesh IP of the Pi-hole server: `DNS` >> `Records` >> `Add record` (if you want, you can also add the same DNS record in your origin DNS manager).
+3. Wait for the new DNS record to propagate, then verify it by entering its URL in your browser. If it connects to your Pi-hole, that means it works.
+4. Now you (and only you) can access your Pi-hole web UI through an easily memorable URL. Even though the DNS A record is visible to everyone, they can't connect to your Mesh IP without being part of your mesh.
+
+![Pi-hole web UI logging screen](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-dns-config.png)
+
+### Make your Connection Secure
+
+1. ...
 
 ### Basic Pi-Hole Configuration and Integration
 
@@ -78,6 +86,7 @@ MESH_IP=yourPiHoleServerIpInMeshNetwork
 ### Cleanup & Troubleshooting
 
 - `docker compose down` - stop Pi-hole while preserving existing configuration.
+- `docker compose down` - stops Pi-hole and removes existing configuration and containers, but leaves created files by volumes.
 - `./cleanup.sh` - script for full cleanup of Pi-hole. It stops the service and removes all saved data (good for hard resets).
 
 ## Extra
