@@ -1,4 +1,4 @@
-pi-hole.mmazur.org {
+pi-hole.mmazur.org, {$MESH_IP}, {$LOCAL_IP}, localhost, 127.0.0.1 {
     # Redirect all HTTP traffic from / to /admin
     redir / /admin/
     # Redirect all traffic to 
