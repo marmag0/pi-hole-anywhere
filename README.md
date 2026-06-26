@@ -88,22 +88,37 @@ MESH_IP=yourPiHoleServerIpInMeshNetwork
 
 ### Start Using Pi-Hole
 
-1. Open the Pi-hole web UI and enter your password. You should now see the Pi-hole dashboard with telemetry and configuration options.
-2. Choose your DNS provider at `SYSTEM` >> `Settings` >> `DNS`. I recommend Cloudflare One because it is secure and privacy-oriented, and it does not use your request data for profiling.
+1. Open the Pi-hole web UI and enter your password (previously set as `API_PASSWORD`). You should now see the Pi-hole dashboard with telemetry and configuration options.
+2. Choose your DNS provider at `SYSTEM` >> `Settings` >> `DNS`. I recommend Cloudflare DNS (`1.1.1.1`, `1.0.0.1`) because it is secure, privacy-oriented, and does not use your request data for profiling.
 
 ![Pi-hole DNS recursive resolver settings](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-choose-DNS.png)
 
-3. To use Pi-hole on your device, update the DNS server settings to the Pi-hole IP addresses. Many devices allow multiple DNS servers for redundancy, so you can enter:
+3. Add extra blocklists to Pi-hole to block more ads and tracking. Example suggestions:
+   - Default Pi-hole list
+   - General tracking and ad blocking list
+   - Two malware blocklists from different sources for redundancy
+   - A local-language blocklist for your region (for example, a Polish list if that is appropriate for you)
+
+```
+https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+https://big.oisd.nl
+https://raw.githubusercontent.com/Spam404/Lists/master/main-blacklist.txt
+https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt
+https://urlhaus.abuse.ch/downloads/hostfile/
+```
+
+![Blocklist panel in Pi-hole](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-blocklist.png)
+
+4. To use Pi-hole on your device, update the DNS server settings to the Pi-hole IP addresses. Many devices allow multiple DNS servers for redundancy, so you can enter:
 
 ```
 LOCAL_IP
 MESH_IP
-1.1.1.1
 ```
 
-![On-device DNS settings](https://marmag0.github.io/endpoints/pi-hole-anywhere/dns-settings.png)
-
-4. This configuration lets your device try the local Pi-hole first. If your device is outside your LAN, it will use the Pi-hole Mesh IP instead. If Pi-hole is unavailable entirely, the device can still fall back to the global `1.1.1.1` resolver.
+5. This configuration lets your device try the local Pi-hole first. If your device is outside your LAN, it will use the Pi-hole Mesh IP instead.
+6. If Pi-hole is unavailable entirely, DNS resolution may fall back to other resolvers and will not be filtered by Pi-hole. Adding a third DNS address such as `1.1.1.1` does not guarantee ordered use on modern systems, because many clients query all configured DNS servers in parallel.
+7. If you want stronger enforcement of Pi-hole-first DNS resolution, consider using a client-side tool or firewall rule that forces DNS traffic through Pi-hole.
 
 ### Cleanup & Troubleshooting
 
