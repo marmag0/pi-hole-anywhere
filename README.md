@@ -57,9 +57,27 @@ For more information about **Cloudflare Mesh**, refer to its [official documenta
 
 ![Device profiles in Cloudflare Zero Trust - 2](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-profile-2.png)
 
-9. If everything works, both nodes are online and you can ping them - you're ready for Pi-hole deployment!
+9. Scroll down a little more to the `Split Tunnels` section, choose `Exclude IPs`, and then click `Manage`.
 
-10. **EXTRA:** If you're using one of Cloudflare's premium plans, you can set up a default DNS for your Mesh that points to Pi-hole's IP address; in that case, leave `Traffic and DNS mode` enabled.
+![Device profiles in Cloudflare Zero Trust - 3](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-profile-3.png)
+
+10. To exclude those addresses, add Docker's subnet `172.16.0.0/12` and your LAN's subnet, e.g. `192.168.x.x/24`.
+    This will make Cloudflare's `warp-svc` installed on your nodes ignore route changes outside the Mesh, which can overwhelm it and cause a crash.
+
+![Device profiles in Cloudflare Zero Trust - 4](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-profile-4.png)
+
+11. Restart `warp-svc` on all of your nodes and test connectivity:
+
+```bash
+# From nodes' CLI
+sudo systemctl restart warp-svc.service
+# From remote host
+ssh -t pi-hole "sudo systemctl restart warp-svc.service"
+```
+
+12. If everything works, both nodes are online and you can ping them once again - you're ready for Pi-hole deployment! If there's only a problem with connectivity between your client and server nodes, make sure that `Default` device profile is the same as `Mesh Network Profile`.
+
+13. **EXTRA:** If you're using one of Cloudflare's premium plans, you can set up a default DNS for your Mesh that points to Pi-hole's IP address; in that case, leave `Traffic and DNS mode` enabled.
 
 ### Deploying Pi-hole with Docker
 
