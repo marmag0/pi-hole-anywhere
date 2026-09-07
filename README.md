@@ -166,3 +166,12 @@ To see more of my work, check out my:
 
 - [GitHub Profile](https://github.com/marmag0)
 - [LinkedIn Profile](https://www.linkedin.com/in/mikolaj-mazur)
+
+## TODO
+
+- Update the `origin` remote URL to `marmag0/pi-hole-anywhere`.
+- Limit cleanup to this project and remove all Pi-hole configuration directories.
+- Create unique, consistent backup archives and prevent updates during backups.
+- Make the update log path configurable, use `backup.sh` for backups, and prevent overlapping cron runs.
+- Verify the Pi-hole healthcheck in a running container.
+- Add automated Compose, shell syntax, and ShellCheck checks.
