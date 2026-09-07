@@ -112,7 +112,7 @@ LOCAL_IP
 ### Cleanup & Troubleshooting
 
 - `docker compose down` - stop Pi-hole while preserving existing configuration.
-- `docker compose down --volumes` - stop Pi-hole and remove containers, while leaving any created volumes intact.
+- `docker compose down --volumes` - stop Pi-hole and remove containers and named volumes, while leaving bind-mounted configuration folders intact.
 - `./cleanup.sh` - script for full cleanup of Pi-hole. It stops the service and removes all saved data (good for hard resets).
 
 ## Extra
@@ -170,7 +170,6 @@ To see more of my work, check out my:
 ## TODO
 
 - Update the `origin` remote URL to `marmag0/pi-hole-anywhere`.
-- Limit cleanup to this project and remove all Pi-hole configuration directories.
 - Create unique, consistent backup archives and prevent updates during backups.
 - Make the update log path configurable, use `backup.sh` for backups, and prevent overlapping cron runs.
 - Verify the Pi-hole healthcheck in a running container.

@@ -49,13 +49,15 @@ fi
 
 # Stopping and removing Docker containers
 log "*" "Removing Docker containers, networks and volumes..."
-docker compose down -v
-docker system prune -f
+docker compose down -v --remove-orphans
 
 # Removing volume files
 log "*" "Removing any other volume files..."
 if [ -d "etc-pihole" ]; then
 	rm -rf etc-pihole
+fi
+if [ -d "etc-dnsmasq.d" ]; then
+	rm -rf etc-dnsmasq.d
 fi
 
 log "+" "Cleanup process completed!"
