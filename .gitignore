@@ -28,6 +28,7 @@ backup/
 .docker/
 
 # Logs and temporary files
+cron/
 *.log
 logs/
 npm-debug.log*

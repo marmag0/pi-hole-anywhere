@@ -35,6 +35,16 @@ if [ ! -f "docker-compose.yml" ]; then
     exit 1
 fi
 
+if [ ! -f ".env" ]; then
+    log "!" "Error: .env file not found in $(pwd)! Copy .env.example first."
+    exit 1
+fi
+
+if ! docker compose config --quiet; then
+    log "!" "Error: Docker Compose configuration is invalid!"
+    exit 1
+fi
+
 # Running Pi-hole using Docker
 if [ "${FLAG}" == "-d" ]; then
 	log "+" "Launching Pi-hole in detached mode..."

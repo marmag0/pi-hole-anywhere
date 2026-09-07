@@ -4,15 +4,11 @@ services:
     image: pihole/pihole:latest
     hostname: pi-hole-server
     ports:
-      # DNS Ports (local)
+      # DNS ports available on the local network only.
       - "${LOCAL_IP}:53:53/tcp"
       - "${LOCAL_IP}:53:53/udp"
-      # DNS Ports (external)
-      - "${MESH_IP}:53:53/tcp"
-      - "${MESH_IP}:53:53/udp"
-      # HTTP Ports
-      - "80:80/tcp"
-      - "443:443/tcp"
+      # Keep the Pi-hole dashboard available on the local network.
+      - "${LOCAL_IP}:80:80/tcp"
     environment:
       TZ: "Europe/Warsaw"
       FTLCONF_webserver_api_password: ${API_PASSWORD}
@@ -20,4 +16,12 @@ services:
     volumes:
       - "./etc-pihole:/etc/pihole"
       - "./etc-dnsmasq.d:/etc/dnsmasq.d"
+    restart: unless-stopped
+
+  cloudflared:
+    container_name: cloudflared
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - pihole
     restart: unless-stopped
