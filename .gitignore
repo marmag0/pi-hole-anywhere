@@ -19,6 +19,7 @@ Icon_
 etc-pihole/
 etc-dnsmasq.d/
 backup/
+backup.conf
 
 # VS Code specific files
 .vscode/

@@ -12,8 +12,20 @@ log() {
 
 log "*" "Starting backup process..."
 
-BACKUP_DIR="/home/user/.../backup" # <-- adjust here
-BACKUPED_DIRS=("/home/user/.../etc-pihole" "/home/user/.../etc-dnsmasq.d") # <-- adjust here
+# Switching to script's directory
+cd "$(dirname "$0")" || exit 1
+
+if [ ! -f "backup.conf" ]; then
+    log "!" "Error: Backup configuration file not found in $(pwd)! Copy backup.conf.example first."
+    exit 1
+fi
+
+source backup.conf
+
+if [ -z "${BACKUP_DIR}" ] || [ "${#BACKUPED_DIRS[@]}" -eq 0 ]; then
+    log "!" "Error: Backup configuration is incomplete!"
+    exit 1
+fi
 
 for dir in "${BACKUPED_DIRS[@]}"; do
 	if [ ! -d "${dir}" ]; then

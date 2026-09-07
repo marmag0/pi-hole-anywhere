@@ -138,9 +138,10 @@ This will run the update once a week, on Sunday at 4:00 AM.
 
 If you want to preserve Pi-hole configuration before updating or migrating, you can use the provided `backup.sh` script.
 
-1. Open `backup.sh` and adjust `BACKUP_DIR` to the directory where you want your backup archive to be stored.
-2. Set `BACKUPED_DIRS` to the directories you want to archive. By default, these are the Pi-hole configuration folders that should be preserved.
-3. Run the script with:
+1. Copy `backup.conf.example` to `backup.conf`.
+2. Set `BACKUP_DIR` to the directory where you want your backup archive to be stored.
+3. Set `BACKUPED_DIRS` to the directories you want to archive. By default, these are the Pi-hole configuration folders that should be preserved.
+4. Run the script with:
 
 ```bash
 ./backup.sh
@@ -165,10 +166,3 @@ To see more of my work, check out my:
 
 - [GitHub Profile](https://github.com/marmag0)
 - [LinkedIn Profile](https://www.linkedin.com/in/mikolaj-mazur)
-
-## TODO
-
-- Add a healthcheck for Pi-hole and wait for it before starting cloudflared.
-- Pin Docker image versions and document an update policy.
-- Make backup paths configurable without editing `backup.sh`.
-- Add a post-deployment connectivity check for the local dashboard.
