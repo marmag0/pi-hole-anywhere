@@ -12,7 +12,8 @@ TARGET_DIR="${1:-}"
 log() {
 	local level="$1"
 	local message="$2"
-	local log_msg="[${level}] $(date): ${message}"
+	local log_msg
+	log_msg="[${level}] $(date): ${message}"
 	echo "${log_msg}"
 }
 
@@ -41,6 +42,7 @@ LOG_FILE="cron/cron.log"
 BACKUP_BEFORE_UPDATE=false
 
 if [ -f "update.conf" ]; then
+	# shellcheck source=update.conf.example
 	source ./update.conf
 fi
 

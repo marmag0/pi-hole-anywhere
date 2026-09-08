@@ -17,7 +17,7 @@ services:
       - "./etc-pihole:/etc/pihole"
       - "./etc-dnsmasq.d:/etc/dnsmasq.d"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1/admin/"]
+      test: ["CMD", "curl", "-fsSL", "-o", "/dev/null", "http://127.0.0.1/admin/"]
       interval: 30s
       timeout: 5s
       retries: 3

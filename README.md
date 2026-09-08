@@ -24,6 +24,7 @@ For more information about **Cloudflare Tunnel**, refer to its [official documen
   - [Start Using Pi-hole](#start-using-pi-hole)
   - [Cleanup & Troubleshooting](#cleanup--troubleshooting)
 - [Extra](#extra)
+  - [Checks](#checks)
   - [Auto Updates](#auto-updates)
   - [Backup](#backup)
   - [Migration](#migration)
@@ -138,6 +139,10 @@ https://urlhaus.abuse.ch/downloads/hostfile/
 - `./cleanup.sh` - script for full cleanup of Pi-hole. It stops the service and removes all saved data (good for hard resets).
 
 ## Extra
+
+### Checks
+
+GitHub Actions validates Docker Compose, checks Bash syntax, and runs ShellCheck on every push and pull request. Compose validation uses `.env.example`, so these checks do not require your tunnel token or local configuration.
 
 ### Auto Updates
 
