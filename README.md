@@ -18,6 +18,7 @@ For more information about **Cloudflare Tunnel**, refer to its [official documen
 
 - [Deployment: Step-by-Step](#deployment-step-by-step)
   - [Environment Preparation](#environment-preparation)
+  - [Cloudflare Access Setup](#cloudflare-access-setup)
   - [Cloudflare Tunnel Setup](#cloudflare-tunnel-setup)
   - [Deploying Pi-hole with Docker](#deploying-pi-hole-with-docker)
   - [Start Using Pi-hole](#start-using-pi-hole)
@@ -39,9 +40,34 @@ For more information about **Cloudflare Tunnel**, refer to its [official documen
 cp .env.example .env
 ```
 
+### Cloudflare Access Setup
+
+1. Navigate to the Cloudflare Zero Trust panel and choose `Access controls` > `Applications` > `Add an application`.
+2. Select `Self-hosted`, enter a name, and configure the same public hostname that will be used for the Pi-hole dashboard.
+3. Create an `Allow` policy that includes only the email addresses allowed to access the dashboard. Enable `One-time PIN` as the login method.
+4. Save the application. Authorized users will receive a login code by email when opening the dashboard domain.
+
 ### Cloudflare Tunnel Setup
 
-> **TODO: Add your Cloudflare Tunnel and Access-policy setup.**
+1. Navigate to the Cloudflare Zero Trust panel and choose `Networking` > `Tunnels` > `Create a tunnel`.
+
+![Cloudflare Zerotrust tunnels and connector dashboard]()
+
+2. Select `Cloudflared` as the tunnel type.
+
+![Cloudflare tunnel type selection]()
+
+3. Choose a name that identifies the connector's purpose, such as `pi-hole-home`.
+
+![Cloudflare tunnel name selection]()
+
+4. Copy the Cloudflare Tunnel token and set it in `.env` as `CLOUDFLARE_TUNNEL_TOKEN=yourCloudflareTunnelToken`.
+
+![Cloudflare tunnel access token codeblocks]()
+
+5. Add a public hostname for the Pi-hole dashboard domain. Set the service to `http://pihole:80`. The hostname will require the email authentication configured in [Cloudflare Access Setup](#cloudflare-access-setup).
+
+![Cloudflare domain selection for tunnel]()
 
 The `cloudflared` container reaches the dashboard at `http://pihole:80` over the internal Docker network. It does not publish Pi-hole DNS through the tunnel.
 
@@ -99,14 +125,10 @@ https://urlhaus.abuse.ch/downloads/hostfile/
 
 ![Blocklist panel in Pi-hole](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-blocklist.png)
 
-4. To use Pi-hole on a local-network device, set its DNS server to:
-
-```
-LOCAL_IP
-```
+4. To use Pi-hole on a local-network device, set its DNS server to `LOCAL_IP` (the IP address of the Pi-hole server).
 
 5. This project does not expose Pi-hole DNS through Cloudflare Tunnel. Devices outside the LAN can use the protected tunnel only to open the web interface.
-6. If Pi-hole is unavailable entirely, DNS resolution may fall back to other resolvers and will not be filtered by Pi-hole. Adding a third DNS address such as `1.1.1.1` does not guarantee ordered use on modern systems, because many clients query all configured DNS servers in parallel.
+6. If Pi-hole is unavailable entirely, DNS resolution may fall back to other resolvers and will not be filtered by Pi-hole. Adding a third DNS address such as `1.1.1.1` does not guarantee ordered use on modern systems, because many clients query all configured DNS servers in parallel (the Pi-hole won't work properly).
 7. If you want stronger enforcement of Pi-hole-first DNS resolution, consider using a client-side tool or firewall rule that forces DNS traffic through Pi-hole.
 
 ### Cleanup & Troubleshooting
@@ -147,7 +169,7 @@ If you want to preserve Pi-hole configuration before updating or migrating, you 
 ./backup.sh
 ```
 
-The script will create a timestamped `.tar.gz` archive in the backup directory.
+The script briefly stops a running Pi-hole for a consistent backup and creates a timestamped `.tar.gz` archive in the backup directory.
 
 ### Migration
 
@@ -166,11 +188,3 @@ To see more of my work, check out my:
 
 - [GitHub Profile](https://github.com/marmag0)
 - [LinkedIn Profile](https://www.linkedin.com/in/mikolaj-mazur)
-
-## TODO
-
-- Update the `origin` remote URL to `marmag0/pi-hole-anywhere`.
-- Create unique, consistent backup archives and prevent updates during backups.
-- Make the update log path configurable, use `backup.sh` for backups, and prevent overlapping cron runs.
-- Verify the Pi-hole healthcheck in a running container.
-- Add automated Compose, shell syntax, and ShellCheck checks.
