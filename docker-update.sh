@@ -6,88 +6,81 @@ set -e
 # prerequisites check #
 # ------------------- #
 
-TARGET_DIR="$1"
-
-LOG_DIR="${HOME}/pi-hole/cron" # <-- adjust here
-LOG_FILE="${LOG_DIR}/cron.log" # <-- adjust here
-
-if [ ! -d "${LOG_DIR}" ]; then
-        mkdir -p "${LOG_DIR}"
-fi
-if [ ! -f "${LOG_FILE}" ]; then
-	touch "${LOG_FILE}"
-fi
+TARGET_DIR="${1:-}"
 
 # usage: log [*/!/-/+] {message}
 log() {
 	local level="$1"
 	local message="$2"
 	local log_msg="[${level}] $(date): ${message}"
-	echo "${log_msg}" >> "${LOG_FILE}"
+	echo "${log_msg}"
 }
 
 log "*" "Running prerequisites tests..."
 
 if [ -z "$TARGET_DIR" ]; then
 	log "!" "Error! Target directory not specified! Usage: $0 /path/to/containers"
-	echo "----------------------------------------" >> "${LOG_FILE}"
+	echo "----------------------------------------"
     	exit 1
 fi
 
 if ! cd "$TARGET_DIR" 2> /dev/null; then
 	log "!" "Error! Directory does not exist: $TARGET_DIR"
-    	echo "----------------------------------------" >> "${LOG_FILE}"
+	echo "----------------------------------------"
 	exit 1
 fi
 
 PROJECT_NAME=$(basename "$(pwd)")
 
+if [ ! -f "docker-compose.yml" ]; then
+	log "!" "Error! Docker Compose file not found in $(pwd)!"
+	exit 1
+fi
 
-# -------------- #
-# backup options #
-# -------------- #
+LOG_FILE="cron/cron.log"
+BACKUP_BEFORE_UPDATE=false
 
-#BACKUP_DIR="/home/user/.../backup" # <-- adjust here
-#BACKUPED_DIRS=("/home/user/.../etc-pihole" "/home/user/.../etc-dnsmasq.d") # <-- adjust here
-#
-#for dir in "${BACKUPED_DIRS[@]}"; do
-#	if [ ! -d "${dir}" ]; then
-#		log "!" "Error! Backup directory does not exist: ${dir}"
-#		echo "----------------------------------------" >> "${LOG_FILE}"
-#		exit 1
-#	fi
-#done
-#
-#if [ ! -d "${BACKUP_DIR}" ]; then
-#        mkdir -p "${BACKUP_DIR}"
-#fi
-#
-#log "*" "Creating volume backup..."
-#tar -czvf "${BACKUP_DIR}/backup_$(date +%F).tar.gz" "${BACKUPED_DIRS[@]}" >> "${LOG_FILE}" 2>&1
+if [ -f "update.conf" ]; then
+	source ./update.conf
+fi
 
+if [ -z "${LOG_FILE}" ] || [[ "${BACKUP_BEFORE_UPDATE}" != "true" && "${BACKUP_BEFORE_UPDATE}" != "false" ]]; then
+	log "!" "Error! Set LOG_FILE and BACKUP_BEFORE_UPDATE (true or false) in update.conf."
+	exit 1
+fi
+
+mkdir -p "$(dirname "${LOG_FILE}")"
+exec >> "${LOG_FILE}" 2>&1
+
+source ./maintenance.sh
+trap release_lock EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+acquire_lock
+
+docker compose config --quiet
+
+if [ "${BACKUP_BEFORE_UPDATE}" == "true" ]; then
+	log "*" "Creating backup before update..."
+	if ! bash ./backup.sh; then
+		log "!" "CRITICAL: Backup failed! Update canceled."
+		exit 1
+	fi
+fi
 
 # ------------- #
 # docker update #
 # ------------- #
 
-PROJECT_NAME=$(basename "$(pwd)")
 log "*" "[${PROJECT_NAME}]: Starting docker update..."
 
-LOCK_DIR=".maintenance.lock"
-if ! mkdir "${LOCK_DIR}" 2> /dev/null; then
-	log "!" "Error! Another backup or update is already running."
-	exit 1
-fi
-
-trap 'rmdir "${LOCK_DIR}"' EXIT
-
-if docker compose pull >> "${LOG_FILE}" 2>&1 && docker compose up -d >> "${LOG_FILE}" 2>&1; then
-	docker image prune -f >> "${LOG_FILE}" 2>&1
+if docker compose pull && docker compose up -d; then
+	docker image prune -f
 	log "+" "[$PROJECT_NAME]: Update successful!"
 else
 	log "!" "CRITICAL: Docker update failed! Check log file for details."
-    echo "----------------------------------------" >> "${LOG_FILE}"
+    echo "----------------------------------------"
     exit 1
 fi
 
-echo "----------------------------------------" >> "${LOG_FILE}"
+echo "----------------------------------------"

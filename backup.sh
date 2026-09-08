@@ -20,29 +20,33 @@ if [ ! -f "backup.conf" ]; then
     exit 1
 fi
 
-source backup.conf
+source ./backup.conf
+source ./maintenance.sh
 
 if [ -z "${BACKUP_DIR}" ] || [ "${#BACKUPED_DIRS[@]}" -eq 0 ]; then
     log "!" "Error: Backup configuration is incomplete!"
     exit 1
 fi
 
-LOCK_DIR=".maintenance.lock"
 PIHOLE_STOPPED=false
 
-if ! mkdir "${LOCK_DIR}" 2> /dev/null; then
-    log "!" "Error: Another backup or update is already running!"
-    exit 1
-fi
-
 cleanup() {
+    local result=$?
+    trap - EXIT
     if [ "${PIHOLE_STOPPED}" == "true" ]; then
-        docker compose start pihole || log "!" "Error! Pi-hole could not be restarted automatically."
+        if ! docker compose start pihole; then
+            log "!" "Error! Pi-hole could not be restarted automatically."
+            result=1
+        fi
     fi
-    rmdir "${LOCK_DIR}" || true
+    release_lock || result=1
+    exit "${result}"
 }
 
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+acquire_lock
 
 for dir in "${BACKUPED_DIRS[@]}"; do
 	if [ ! -d "${dir}" ]; then
@@ -56,10 +60,11 @@ if [ ! -d "${BACKUP_DIR}" ]; then
         mkdir -p "${BACKUP_DIR}"
 fi
 
-if [ -n "$(docker compose ps --status running -q pihole)" ]; then
+PIHOLE_RUNNING=$(docker compose ps --status running -q pihole)
+if [ -n "${PIHOLE_RUNNING}" ]; then
     log "*" "Stopping Pi-hole for a consistent backup..."
-    docker compose stop pihole
     PIHOLE_STOPPED=true
+    docker compose stop pihole
 fi
 
 log "*" "Creating volume backup..."

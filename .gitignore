@@ -20,6 +20,7 @@ etc-pihole/
 etc-dnsmasq.d/
 backup/
 backup.conf
+update.conf
 .maintenance.lock/
 
 # VS Code specific files
@@ -41,3 +42,4 @@ yarn-error.log*
 # AI agents specific files
 AGENTS.md
 tasks.md
+tests/

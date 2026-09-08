@@ -145,9 +145,9 @@ Keeping self-hosted services up to date is one of the most important parts of ma
 
 The provided `docker-update.sh` script lets you update Pi-hole automatically with `cron` and also clean up unused Docker images after a successful refresh.
 
-1. Open `docker-update.sh` and adjust the log directory path if needed. The script will create it automatically if it does not exist.
+1. If you want to change the update settings, copy `update.conf.example` to `update.conf`. Set `LOG_FILE` to the desired log path; relative paths are resolved from the project folder. The default is `cron/cron.log`, and its directory is created automatically.
 2. Run the script with the path to the folder that contains `docker-compose.yml`, for example: `./docker-update.sh "/path/to/pi-hole"`.
-3. If you want a backup before every update, uncomment the backup section in `docker-update.sh` and set the backup directory and the directories you want to archive.
+3. If you want a backup before every update, set `BACKUP_BEFORE_UPDATE=true` in `update.conf` and configure `backup.conf` as described in [Backup](#backup). The updater calls `backup.sh` and cancels the update if the backup or Pi-hole restart fails. Make sure the cron user can run the backup's `sudo tar` command without an interactive password prompt.
 4. Add the script to `cron` for regular automatic updates >> `crontab -e`. A sample entry could look like this:
 
 ```bash
@@ -155,6 +155,8 @@ The provided `docker-update.sh` script lets you update Pi-hole automatically wit
 ```
 
 This will run the update once a week, on Sunday at 4:00 AM.
+
+Backups and updates share `.maintenance.lock` in the project folder. An overlapping run exits without changing the services. The lock is released when the process exits normally or receives an interrupt or termination signal. After a power loss or forced kill, remove the stale lock only after confirming no backup or update is still running.
 
 ### Backup
 
