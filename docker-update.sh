@@ -73,6 +73,14 @@ PROJECT_NAME=$(basename "$(pwd)")
 PROJECT_NAME=$(basename "$(pwd)")
 log "*" "[${PROJECT_NAME}]: Starting docker update..."
 
+LOCK_DIR=".maintenance.lock"
+if ! mkdir "${LOCK_DIR}" 2> /dev/null; then
+	log "!" "Error! Another backup or update is already running."
+	exit 1
+fi
+
+trap 'rmdir "${LOCK_DIR}"' EXIT
+
 if docker compose pull >> "${LOG_FILE}" 2>&1 && docker compose up -d >> "${LOG_FILE}" 2>&1; then
 	docker image prune -f >> "${LOG_FILE}" 2>&1
 	log "+" "[$PROJECT_NAME]: Update successful!"
