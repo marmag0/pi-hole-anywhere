@@ -42,6 +42,5 @@ yarn-error.log*
 .eslintcache
 
 # Local task files and tests
-AGENTS.md
 tasks.md
 tests/
