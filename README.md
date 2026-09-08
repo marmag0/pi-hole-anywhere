@@ -105,6 +105,8 @@ CLOUDFLARE_TUNNEL_TOKEN=yourCloudflareTunnelToken
 
 ### Start Using Pi-Hole
 
+`./deploy.sh` and `./deploy.sh -d` automatically configure the Cloudflare upstream DNS servers listed below, add the five blocklists, and update Gravity. If you start the containers directly with Docker Compose, run `./provision.sh` to apply the same setup. Repeated runs keep existing list IDs and unrelated lists; the five documented lists are enabled and Gravity is refreshed each time. A failed list download is reported as an error so you can retry without substituting a different list.
+
 1. Open the Pi-hole web UI and enter your password (previously set as `API_PASSWORD`). You should now see the Pi-hole dashboard with telemetry and configuration options.
 2. Choose your DNS provider at `SYSTEM` >> `Settings` >> `DNS`. I recommend Cloudflare DNS (`1.1.1.1`, `1.0.0.1`) because it is secure, privacy-oriented, and does not use your request data for profiling.
 
@@ -161,7 +163,7 @@ The provided `docker-update.sh` script lets you update Pi-hole automatically wit
 
 This will run the update once a week, on Sunday at 4:00 AM.
 
-Backups and updates share `.maintenance.lock` in the project folder. An overlapping run exits without changing the services. The lock is released when the process exits normally or receives an interrupt or termination signal. After a power loss or forced kill, remove the stale lock only after confirming no backup or update is still running.
+Backups, updates, and provisioning share `.maintenance.lock` in the project folder. An overlapping run exits without changing the services. The lock is released when the process exits normally or receives an interrupt or termination signal. After a power loss or forced kill, remove the stale lock only after confirming no backup, update, or provisioning run is still running.
 
 ### Backup
 

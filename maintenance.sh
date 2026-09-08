@@ -11,7 +11,7 @@ acquire_lock() {
     fi
 
     if ! mkdir "${LOCK_DIR}" 2> /dev/null; then
-        log "!" "Error! Another backup or update is already running. Check .maintenance.lock if a previous run was interrupted."
+        log "!" "Error! Another backup, update, or provisioning run is already running. Check .maintenance.lock if a previous run was interrupted."
         return 1
     fi
 

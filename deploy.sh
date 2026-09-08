@@ -47,6 +47,8 @@ if ! docker compose config --quiet; then
 fi
 
 # Running Pi-hole using Docker
+bash ./provision.sh
+
 if [ "${FLAG}" == "-d" ]; then
 	log "+" "Launching Pi-hole in detached mode..."
 	echo "----------------------------------------"
