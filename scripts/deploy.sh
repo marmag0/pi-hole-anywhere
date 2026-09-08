@@ -13,14 +13,14 @@ log() {
 
 log "*" "Starting enhanced Pi-hole deployment..."
 
-# Switching to script's directory
-cd "$(dirname "$0")" || exit 1
+# Switching to project directory
+cd "$(dirname "$0")/.." || exit 1
 log "*" "Checking all dependencies..."
 
 # Checking if the flag exists and it's correct
-FLAG="$1"
-if [[ "${FLAG}" != "-d" && "${FLAG}" != "" ]]; then
-	log "!" "Error: Flag ${FLAG} doesn't exists! Try '-d'."
+FLAG="${1:-}"
+if [ "$#" -gt 1 ] || [[ "${FLAG}" != "-d" && "${FLAG}" != "" ]]; then
+	log "!" "Error: Invalid arguments! Try '-d'."
 	exit 1
 fi
 
@@ -37,7 +37,7 @@ if [ ! -f "docker-compose.yml" ]; then
 fi
 
 if [ ! -f ".env" ]; then
-    log "!" "Error: .env file not found in $(pwd)! Copy .env.example first."
+    log "!" "Error: .env file not found in $(pwd)! Copy config/.env.example first."
     exit 1
 fi
 
@@ -47,14 +47,20 @@ if ! docker compose config --quiet; then
 fi
 
 # Running Pi-hole using Docker
-bash ./provision.sh
+source ./scripts/maintenance.sh
+trap release_lock EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+acquire_lock
+bash ./scripts/provision.sh
+docker compose up -d --wait --wait-timeout 180
+release_lock
 
 if [ "${FLAG}" == "-d" ]; then
-	log "+" "Launching Pi-hole in detached mode..."
+	log "+" "Pi-hole is running in detached mode!"
 	echo "----------------------------------------"
-	docker compose up -d
 else
-	log "+" "Launching Pi-hole in attached mode... Click 'd' to detach."
+	log "+" "Following logs... Press Ctrl+C to stop following without stopping Pi-hole."
 	echo "----------------------------------------"
-	docker compose up
+	docker compose logs --follow
 fi

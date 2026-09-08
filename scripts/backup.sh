@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+umask 077
 
 # usage: log [*/!/-/+] {message}
 log() {
@@ -13,17 +14,17 @@ log() {
 
 log "*" "Starting backup process..."
 
-# Switching to script's directory
-cd "$(dirname "$0")" || exit 1
+# Switching to project directory
+cd "$(dirname "$0")/.." || exit 1
 
-if [ ! -f "backup.conf" ]; then
-    log "!" "Error: Backup configuration file not found in $(pwd)! Copy backup.conf.example first."
+if [ ! -f "config/backup.conf" ]; then
+    log "!" "Error: Backup configuration file not found in $(pwd)/config! Copy config/backup.conf.example first."
     exit 1
 fi
 
-# shellcheck source=backup.conf.example
-source ./backup.conf
-source ./maintenance.sh
+# shellcheck source=config/backup.conf.example
+source ./config/backup.conf
+source ./scripts/maintenance.sh
 
 if [ -z "${BACKUP_DIR}" ] || [ "${#BACKUPED_DIRS[@]}" -eq 0 ]; then
     log "!" "Error: Backup configuration is incomplete!"
@@ -31,10 +32,14 @@ if [ -z "${BACKUP_DIR}" ] || [ "${#BACKUPED_DIRS[@]}" -eq 0 ]; then
 fi
 
 PIHOLE_STOPPED=false
+BACKUP_FILE=""
 
 cleanup() {
     local result=$?
     trap - EXIT
+    if [ -n "${BACKUP_FILE}" ] && [ -f "${BACKUP_FILE}" ]; then
+        rm -f -- "${BACKUP_FILE}" || result=1
+    fi
     if [ "${PIHOLE_STOPPED}" == "true" ]; then
         if ! docker compose start pihole; then
             log "!" "Error! Pi-hole could not be restarted automatically."
@@ -62,6 +67,16 @@ if [ ! -d "${BACKUP_DIR}" ]; then
         mkdir -p "${BACKUP_DIR}"
 fi
 
+BACKUP_DIR=$(cd "${BACKUP_DIR}" && pwd -P)
+for dir in "${BACKUPED_DIRS[@]}"; do
+    SOURCE_DIR=$(cd "${dir}" && pwd -P)
+    if [[ "${BACKUP_DIR}/" == "${SOURCE_DIR%/}/"* ]]; then
+        log "!" "Error! Backup directory must be outside the directories being archived."
+        exit 1
+    fi
+done
+BACKUP_FILE=$(mktemp "${BACKUP_DIR}/backup_$(date +%F_%H-%M-%S).XXXXXX")
+
 PIHOLE_RUNNING=$(docker compose ps --status running -q pihole)
 if [ -n "${PIHOLE_RUNNING}" ]; then
     log "*" "Stopping Pi-hole for a consistent backup..."
@@ -70,11 +85,13 @@ if [ -n "${PIHOLE_RUNNING}" ]; then
 fi
 
 log "*" "Creating volume backup..."
-if ! sudo tar -czvf "${BACKUP_DIR}/backup_$(date +%F_%H-%M-%S).tar.gz" "${BACKUPED_DIRS[@]}"; then
+if ! sudo tar -czvf "${BACKUP_FILE}" -- "${BACKUPED_DIRS[@]}"; then
     log "!" "Error! Backup failed!"
     echo "----------------------------------------"
     exit 1
 else
+    mv -- "${BACKUP_FILE}" "${BACKUP_FILE}.tar.gz"
+    BACKUP_FILE=""
     log "+" "Backup completed successfully!"
     echo "----------------------------------------"
 fi

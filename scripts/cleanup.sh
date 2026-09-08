@@ -11,10 +11,10 @@ log() {
         echo "${log_msg}"
 }
 
-log "*" "Starting compleate cleanup process..."
+log "*" "Starting complete cleanup process..."
 
-# Switching to script's directory
-cd "$(dirname "$0")" || exit 1
+# Switching to project directory
+cd "$(dirname "$0")/.." || exit 1
 log "*" "Checking all dependencies..."
 
 # Checking if docker-compose.yml is present in CWD of the script
@@ -25,12 +25,12 @@ fi
 
 # Getting confirmation from user
 OUTCOME=""
-echo "You are about to take down your Pi-hole with all it's saved data!"
-echo "This operation is irreversable, unleass you've backed up your volume..."
-read -r -p "Are you sure? [Y/n] " ans
+echo "You are about to take down your Pi-hole with all its saved data!"
+echo "This operation is irreversible unless you've backed up your volume..."
+read -r -p "Are you sure? [y/N] " ans
 case $ans in
 	[Yy]|[Yy][Ee][Ss] ) OUTCOME="yes" ;;
-	[Nn]|[Nn][Oo] )     OUTCOME="no" ;;
+	[Nn]|[Nn][Oo]|"" )  OUTCOME="no" ;;
 	* )                 OUTCOME="error" ;;
 esac
 
@@ -49,6 +49,11 @@ else
 fi
 
 # Stopping and removing Docker containers
+source ./scripts/maintenance.sh
+trap release_lock EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+acquire_lock
 log "*" "Removing Docker containers, networks and volumes..."
 docker compose down -v --remove-orphans
 

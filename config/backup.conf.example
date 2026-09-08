@@ -1,0 +1,2 @@
+BACKUP_DIR="backup"
+BACKUPED_DIRS=("etc-pihole" "etc-dnsmasq.d")

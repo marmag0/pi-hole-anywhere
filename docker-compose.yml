@@ -5,13 +5,13 @@ services:
     hostname: pi-hole-server
     ports:
       # DNS ports available on the local network only.
-      - "${LOCAL_IP}:53:53/tcp"
-      - "${LOCAL_IP}:53:53/udp"
+      - "${LOCAL_IP:?Set LOCAL_IP in .env}:53:53/tcp"
+      - "${LOCAL_IP:?Set LOCAL_IP in .env}:53:53/udp"
       # Keep the Pi-hole dashboard available on the local network.
-      - "${LOCAL_IP}:80:80/tcp"
+      - "${LOCAL_IP:?Set LOCAL_IP in .env}:80:80/tcp"
     environment:
       TZ: "Europe/Warsaw"
-      FTLCONF_webserver_api_password: ${API_PASSWORD}
+      FTLCONF_webserver_api_password: ${API_PASSWORD:?Set API_PASSWORD in .env}
       FTLCONF_dns_listeningMode: "ALL"
     volumes:
       - "./etc-pihole:/etc/pihole"

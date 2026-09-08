@@ -11,8 +11,8 @@ log() {
         echo "${log_msg}"
 }
 
-cd "$(dirname "$0")" || exit 1
-source ./maintenance.sh
+cd "$(dirname "$0")/.." || exit 1
+source ./scripts/maintenance.sh
 
 trap release_lock EXIT
 trap 'exit 130' INT
@@ -23,4 +23,4 @@ log "*" "Starting Pi-hole and waiting for the dashboard..."
 docker compose up -d --wait --wait-timeout 180 pihole
 
 log "*" "Applying the README DNS and blocklist settings..."
-docker compose exec -T --user root pihole bash -s < ./provision-pihole.sh
+docker compose exec -T --user root pihole bash -s < ./scripts/provision-pihole.sh

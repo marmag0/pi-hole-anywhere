@@ -11,7 +11,7 @@ acquire_lock() {
     fi
 
     if ! mkdir "${LOCK_DIR}" 2> /dev/null; then
-        log "!" "Error! Another backup, update, or provisioning run is already running. Check .maintenance.lock if a previous run was interrupted."
+        log "!" "Error! Another maintenance operation is already running. Check .maintenance.lock if a previous run was interrupted."
         return 1
     fi
 
@@ -24,5 +24,6 @@ release_lock() {
     if [ "${LOCK_OWNED:-false}" == "true" ]; then
         rm -f "${LOCK_DIR}/pid"
         rmdir "${LOCK_DIR}"
+        LOCK_OWNED=false
     fi
 }

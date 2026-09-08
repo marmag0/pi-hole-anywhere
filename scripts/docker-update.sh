@@ -42,19 +42,24 @@ LOG_FILE="cron/cron.log"
 BACKUP_BEFORE_UPDATE=false
 
 if [ -f "update.conf" ]; then
-	# shellcheck source=update.conf.example
-	source ./update.conf
+	log "!" "Error! Move update.conf to config/update.conf before running updates."
+	exit 1
+fi
+
+if [ -f "config/update.conf" ]; then
+	# shellcheck source=config/update.conf.example
+	source ./config/update.conf
 fi
 
 if [ -z "${LOG_FILE}" ] || [[ "${BACKUP_BEFORE_UPDATE}" != "true" && "${BACKUP_BEFORE_UPDATE}" != "false" ]]; then
-	log "!" "Error! Set LOG_FILE and BACKUP_BEFORE_UPDATE (true or false) in update.conf."
+	log "!" "Error! Set LOG_FILE and BACKUP_BEFORE_UPDATE (true or false) in config/update.conf."
 	exit 1
 fi
 
 mkdir -p "$(dirname "${LOG_FILE}")"
 exec >> "${LOG_FILE}" 2>&1
 
-source ./maintenance.sh
+source ./scripts/maintenance.sh
 trap release_lock EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
@@ -64,7 +69,7 @@ docker compose config --quiet
 
 if [ "${BACKUP_BEFORE_UPDATE}" == "true" ]; then
 	log "*" "Creating backup before update..."
-	if ! bash ./backup.sh; then
+	if ! bash ./scripts/backup.sh; then
 		log "!" "CRITICAL: Backup failed! Update canceled."
 		exit 1
 	fi
@@ -76,8 +81,7 @@ fi
 
 log "*" "[${PROJECT_NAME}]: Starting docker update..."
 
-if docker compose pull && docker compose up -d; then
-	docker image prune -f
+if docker compose pull && docker compose up -d --wait --wait-timeout 180; then
 	log "+" "[$PROJECT_NAME]: Update successful!"
 else
 	log "!" "CRITICAL: Docker update failed! Check log file for details."
