@@ -51,23 +51,23 @@ cp .env.example .env
 
 1. Navigate to the Cloudflare Zero Trust panel and choose `Networking` > `Tunnels` > `Create a tunnel`.
 
-![Cloudflare Zerotrust tunnels and connector dashboard]()
+![Cloudflare Zerotrust tunnels and connector dashboard](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-1.png)
 
 2. Select `Cloudflared` as the tunnel type.
 
-![Cloudflare tunnel type selection]()
+![Cloudflare tunnel type selection](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-2.png)
 
 3. Choose a name that identifies the connector's purpose, such as `pi-hole-home`.
 
-![Cloudflare tunnel name selection]()
+![Cloudflare tunnel name selection](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-3.png)
 
 4. Copy the Cloudflare Tunnel token and set it in `.env` as `CLOUDFLARE_TUNNEL_TOKEN=yourCloudflareTunnelToken`.
 
-![Cloudflare tunnel access token codeblocks]()
+![Cloudflare tunnel access token codeblocks](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-4.png)
 
 5. Add a public hostname for the Pi-hole dashboard domain. Set the service to `http://pihole:80`. The hostname will require the email authentication configured in [Cloudflare Access Setup](#cloudflare-access-setup).
 
-![Cloudflare domain selection for tunnel]()
+![Cloudflare domain selection for tunnel](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-5.png)
 
 The `cloudflared` container reaches the dashboard at `http://pihole:80` over the internal Docker network. It does not publish Pi-hole DNS through the tunnel.
 
