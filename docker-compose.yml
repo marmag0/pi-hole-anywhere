@@ -4,10 +4,10 @@ services:
     image: pihole/pihole:latest
     hostname: pi-hole-server
     ports:
-      # DNS ports available on the local network only.
+      # Bind DNS to the configured local-network address
       - "${LOCAL_IP:?Set LOCAL_IP in .env}:53:53/tcp"
       - "${LOCAL_IP:?Set LOCAL_IP in .env}:53:53/udp"
-      # Keep the Pi-hole dashboard available on the local network.
+      # Keep local dashboard access alongside the tunnel
       - "${LOCAL_IP:?Set LOCAL_IP in .env}:80:80/tcp"
     environment:
       TZ: "Europe/Warsaw"

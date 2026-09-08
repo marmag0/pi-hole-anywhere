@@ -1,19 +1,17 @@
 # Pi-hole with Cloudflare Tunnel
 
-This repository deploys **Pi-hole** with Docker and makes its web interface available locally and through a Cloudflare Tunnel.
+Run **Pi-hole** with Docker and open its dashboard from your local network or through a **Cloudflare Tunnel** protected by email login.
 
 The tunnel publishes only the Pi-hole web interface. Pi-hole DNS remains available only on the configured local-network IP address.
 
-For more information about **Pi-hole**, refer to its [web page](https://pi-hole.net), the [docker-pi-hole repository](https://github.com/pi-hole/docker-pi-hole), and the [official documentation](https://docs.pi-hole.net/docker/).
-
-For more information about **Cloudflare Tunnel**, refer to its [official documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
+For details beyond this setup, see the [Pi-hole Docker documentation](https://docs.pi-hole.net/docker/) and [Cloudflare Tunnel documentation](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/).
 
 ## Requirements
 
 - Docker installed (Docker Engine or Docker Desktop), with Docker Compose v2 supporting `--wait` and `--wait-timeout`. See the [installation guide](https://docs.docker.com/engine/install/).
 - Bash and `sudo` for the maintenance scripts.
-- A Cloudflare account and a remotely managed tunnel token.
-- A domain name you control to publish the protected Pi-hole hostname.
+- A Cloudflare account and a domain managed through Cloudflare. You'll create the tunnel and copy its token below.
+- A stable local-network IP address for your server, with ports `53` (TCP/UDP) and `80` (TCP) available.
 
 ## Table of Contents
 
@@ -35,113 +33,147 @@ For more information about **Cloudflare Tunnel**, refer to its [official documen
 
 ### Environment Preparation
 
-1. Clone this Git repository to your server and change your CWD to it.
-2. Copy the example environment file and set its values:
+1. Clone this repository to your server and open its folder:
 
-```bash
-cp config/.env.example .env
-```
+   ```bash
+   git clone https://github.com/marmag0/pi-hole-anywhere.git
+   cd pi-hole-anywhere
+   ```
+
+2. Copy the example environment file. You'll fill in the values during setup:
+
+   ```bash
+   cp config/.env.example .env
+   ```
 
 Shell scripts live in `scripts/`, and example and local maintenance configuration files live in `config/`. Keep `.env` and `docker-compose.yml` at the project root so standard Docker Compose commands work. Pi-hole data remains in `etc-pihole/` and `etc-dnsmasq.d/`.
 
+Run the commands below from the project folder unless a step says otherwise. Keep `.env` private; it contains your dashboard password and tunnel token.
+
 ### Cloudflare Access Setup
 
-1. Navigate to the Cloudflare Zero Trust panel and choose `Access controls` > `Applications` > `Add an application`.
-2. Select `Self-hosted`, enter a name, and configure the same public hostname that will be used for the Pi-hole dashboard.
-3. Create an `Allow` policy that includes only the email addresses allowed to access the dashboard. Enable `One-time PIN` as the login method.
-4. Save the application. Authorized users will receive a login code by email when opening the dashboard domain.
+Set up Access before publishing the dashboard hostname.
+
+1. In the Cloudflare Zero Trust dashboard, open `Integrations` > `Identity providers`. If `One-time PIN` isn't listed, select `Add new identity provider` > `One-time PIN`. See Cloudflare's [email login instructions](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/one-time-pin/).
+2. Open `Access controls` > `Applications` > `Add an application` and select `Self-hosted`.
+3. Enter a name and the hostname you'll use for the dashboard, such as `pihole.example.com`. Leave the path empty to protect the whole hostname.
+4. Create an `Allow` policy that includes only your approved email addresses. Select `One-time PIN` as the application's login method and save it.
+
+Use the same hostname in the tunnel setup below. Access protects the public hostname, not the local IP address; Pi-hole's own password still applies to both.
 
 ### Cloudflare Tunnel Setup
 
-1. Navigate to the Cloudflare Zero Trust panel and choose `Networking` > `Tunnels` > `Create a tunnel`.
+1. In the Cloudflare dashboard, open `Networking` > `Tunnels` > `Create a tunnel`.
 
-![Cloudflare Zerotrust tunnels and connector dashboard](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-1.png)
+   ![Cloudflare tunnel list and Create a tunnel button](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-1.png)
 
 2. Select `Cloudflared` as the tunnel type.
 
-![Cloudflare tunnel type selection](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-2.png)
+   ![Cloudflared tunnel type selection](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-2.png)
 
-3. Choose a name that identifies the connector's purpose, such as `pi-hole-home`.
+3. Give the tunnel a name, such as `pi-hole-home`.
 
-![Cloudflare tunnel name selection](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-3.png)
+   ![Cloudflare tunnel name field](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-3.png)
 
-4. Copy the Cloudflare Tunnel token and set it in `.env` as `CLOUDFLARE_TUNNEL_TOKEN=yourCloudflareTunnelToken`.
+4. Copy only the tunnel token from the connector installation command into `CLOUDFLARE_TUNNEL_TOKEN` in `.env`. Don't run that command on the host; this repository starts `cloudflared` in Docker.
 
-![Cloudflare tunnel access token codeblocks](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-4.png)
+   ![Cloudflare connector installation command containing the tunnel token](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-4.png)
 
-5. Add a public hostname for the Pi-hole dashboard domain. Set the service to `http://pihole:80`. The hostname will require the email authentication configured in [Cloudflare Access Setup](#cloudflare-access-setup).
+5. Add a published application route for the hostname from [Cloudflare Access Setup](#cloudflare-access-setup). In the current dashboard, use `Routes` > `Add route` > `Published application`. Set the service URL to `http://pihole:80`; if the form separates the fields, use type `HTTP` and URL `pihole:80`.
 
-![Cloudflare domain selection for tunnel](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-5.png)
+   ![Cloudflare public hostname and service settings](https://marmag0.github.io/endpoints/pi-hole-anywhere/cloudflare-tunnel-ui-5.png)
 
-The `cloudflared` container reaches the dashboard at `http://pihole:80` over the internal Docker network. It does not publish Pi-hole DNS through the tunnel.
+The screenshots show the setup flow; Cloudflare may rename menu items. Its [tunnel setup guide](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/get-started/create-remote-tunnel/) has the current labels.
+
+The tunnel connects after you deploy the containers. `cloudflared` reaches `pihole:80` over the Docker network, so use that address rather than `localhost`. No host port `443` mapping is needed.
 
 ### Deploying Pi-hole with Docker
 
 1. Make sure that Docker is running.
-2. Set up environment variables inside the `.env` file:
+2. Fill in `.env`:
+
    - `API_PASSWORD` - password used to access the Pi-hole dashboard; make sure it is strong.
    - `LOCAL_IP` - local-network IP address of your server. Pi-hole DNS and HTTP are bound to this address.
    - `CLOUDFLARE_TUNNEL_TOKEN` - token for the remotely managed Cloudflare Tunnel.
 
-```bash
-API_PASSWORD=superHardPasswd
-LOCAL_IP=yourPiHoleServerIpInHomeNetwork
-CLOUDFLARE_TUNNEL_TOKEN=yourCloudflareTunnelToken
-```
+   ```dotenv
+   API_PASSWORD=replace-with-a-strong-password
+   LOCAL_IP=192.168.1.10
+   CLOUDFLARE_TUNNEL_TOKEN=replace-with-your-cloudflare-tunnel-token
+   ```
 
-3. Deploy Pi-hole using the provided script and follow its instructions if they occur (recommended):
+   Replace all three examples with your values. `LOCAL_IP` must be assigned to this server, not your router or another device.
+
+3. Deploy using the script (recommended):
+
    - `./scripts/deploy.sh` - deploy and follow logs in the terminal. Press Ctrl+C to stop following logs without stopping the containers.
    - `./scripts/deploy.sh -d` - detached deployment.
    - Scripts resolve the project folder automatically and can be called from another working directory.
 
-4. You can also run this yourself using:
-   - `docker compose up`
-   - `docker compose up -d` - consider adding `-d` so Docker does not block the terminal with logs.
+   The script applies the DNS and blocklist settings below, then waits for Pi-hole to become healthy. For `-d`, wait for `Pi-hole is running in detached mode!` before continuing.
 
-5. Verify that Pi-hole is working:
-   - Check that the Pi-hole web interface is accessible locally at `http://LOCAL_IP/admin/`.
-   - After completing the tunnel setup, verify that the protected Cloudflare hostname opens the same dashboard.
-   - If something goes wrong, check logs with `docker compose logs --follow pihole`.
-     - Refer to [Cleanup & Troubleshooting](https://github.com/marmag0/pi-hole-anywhere#cleanup--troubleshooting) for further troubleshooting info.
+4. Verify both access paths:
 
-![Pi-hole web UI logging screen](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-login.png)
+   - Open `http://LOCAL_IP/admin/`, replacing `LOCAL_IP` with the address from `.env`. You should see Pi-hole's login screen.
+   - Open your public hostname over HTTPS in a private browser window. You should see Cloudflare's email login first, then Pi-hole's login screen after entering the code.
+   - If either check fails, see [Cleanup & Troubleshooting](#cleanup--troubleshooting).
 
-### Start Using Pi-Hole
+   ![Pi-hole dashboard login screen](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-login.png)
 
-`./scripts/deploy.sh` and `./scripts/deploy.sh -d` automatically configure the Cloudflare upstream DNS servers listed below, add the five blocklists, and update Gravity. If you start the containers directly with Docker Compose, run `./scripts/provision.sh` to apply the same setup. Repeated runs keep existing list IDs and unrelated lists; the five documented lists are enabled and Gravity is refreshed each time. A failed list download is reported as an error so you can retry without substituting a different list. The settings below describe the same setup for manual deployment.
+Alternatively, run `docker compose up -d` to start the containers without provisioning. Use `docker compose up` to attach to their output; Ctrl+C then stops the containers. Follow the manual setup below or run `./scripts/provision.sh` afterward.
 
-1. Open the Pi-hole web UI and enter your password (previously set as `API_PASSWORD`). You should now see the Pi-hole dashboard with telemetry and configuration options.
-2. Choose Cloudflare DNS (`1.1.1.1`, `1.0.0.1`) at `SYSTEM` >> `Settings` >> `DNS`.
+### Start Using Pi-hole
 
-![Pi-hole DNS recursive resolver settings](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-choose-DNS.png)
+The deployment script already configures Cloudflare DNS, enables these five blocklists, and updates Gravity. If you used it, skip the manual settings in steps 2-4 and go to step 5 to configure your devices.
 
-3. Add extra blocklists to Pi-hole to block more ads and tracking. Example suggestions:
-   - Default Pi-hole list
-   - General tracking and ad blocking list
-   - Two malware blocklists from different sources for redundancy
-   - A local-language blocklist for your region (for example, a Polish list if that is appropriate for you)
+To reapply this setup later, run `./scripts/provision.sh`. Each run resets upstream DNS to `1.1.1.1` and `1.0.0.1`, enables the five lists, and refreshes Gravity. Existing list IDs, comments, and group assignments are preserved; unrelated lists are left alone. If a download fails, the script reports the affected list so you can retry.
 
-```
-https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
-https://big.oisd.nl
-https://raw.githubusercontent.com/Spam404/Lists/master/main-blacklist.txt
-https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt
-https://urlhaus.abuse.ch/downloads/hostfile/
-```
+1. Log in to the Pi-hole dashboard with the password set in `API_PASSWORD`.
+2. Choose Cloudflare DNS (`1.1.1.1`, `1.0.0.1`) at `SYSTEM` > `Settings` > `DNS`.
 
-![Blocklist panel in Pi-hole](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-blocklist.png)
+   ![Cloudflare selected as the upstream DNS provider in Pi-hole](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-choose-DNS.png)
 
-4. Update Gravity after adding the lists with `docker compose exec pihole pihole -g`. To use Pi-hole on a local-network device, set its DNS server to `LOCAL_IP` (the IP address of the Pi-hole server).
+3. Open the blocklist settings and add these URLs. Keep the default list if it's already present. This setup combines general ad and tracking lists, malware lists, and a Polish list:
 
-5. This project does not expose Pi-hole DNS through Cloudflare Tunnel. Devices outside the LAN can use the protected tunnel only to open the web interface.
-6. Configuring another DNS resolver on clients can bypass Pi-hole filtering even while Pi-hole is available. Do not rely on a public resolver being used only as a fallback.
-7. If you want stronger enforcement of Pi-hole-first DNS resolution, consider using a client-side tool or firewall rule that forces DNS traffic through Pi-hole.
+   ```text
+   https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+   https://big.oisd.nl
+   https://raw.githubusercontent.com/Spam404/Lists/master/main-blacklist.txt
+   https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt
+   https://urlhaus.abuse.ch/downloads/hostfile/
+   ```
+
+   ![Pi-hole blocklist settings](https://marmag0.github.io/endpoints/pi-hole-anywhere/pi-hole-blocklist.png)
+
+4. Update Gravity after adding the lists:
+
+   ```bash
+   docker compose exec pihole pihole -g
+   ```
+
+5. On each local-network device you want to filter, set the DNS server to `LOCAL_IP` from `.env`. Open a website, then check Pi-hole's query log for requests from that device.
+
+Adding a public DNS resolver alongside Pi-hole on a client can bypass filtering even while Pi-hole is available. Don't rely on it being used only as a fallback. Devices outside your local network can use this tunnel for the dashboard, not for DNS.
 
 ### Cleanup & Troubleshooting
 
+Check the service state and logs before resetting anything:
+
+```bash
+docker compose ps
+docker compose logs --tail=100 pihole cloudflared
+```
+
+- If startup reports a port conflict, check whether another service is using port `53` or `80` on `LOCAL_IP`.
+- If the local dashboard works but the public hostname doesn't, check the tunnel token, the `cloudflared` logs, and the route to `http://pihole:80`.
+- If the public hostname skips the email login in a private browser window, check that the Access application protects that exact hostname and has no bypass policy.
+- If you see a maintenance lock error, follow the lock guidance in [Auto Updates](#auto-updates). Don't delete an active lock.
+
+If you need to stop or reset the deployment:
+
 - `docker compose down` - stop Pi-hole while preserving existing configuration.
 - `docker compose down --volumes` - stop Pi-hole and remove containers and named volumes, while leaving bind-mounted configuration folders intact.
-- `./scripts/cleanup.sh` - script for full cleanup of Pi-hole. After confirmation, it stops the services and removes `etc-pihole/` and `etc-dnsmasq.d/`. Backups and `.env` are preserved.
+- `./scripts/cleanup.sh` - full reset. After confirmation, it stops the services and deletes `etc-pihole/` and `etc-dnsmasq.d/`. Make a [backup](#backup) first if you need that data. Backups in the default `backup/` folder and `.env` are preserved.
 
 ## Extra
 
@@ -151,43 +183,50 @@ GitHub Actions validates Docker Compose, checks Bash syntax, and runs ShellCheck
 
 ### Auto Updates
 
-Keeping self-hosted services up to date is one of the most important parts of maintaining a secure and reliable setup. For Pi-hole, a lightweight solution is often better than running a larger tool such as [Watchtower](https://containrrr.dev/watchtower/), especially on low-power hardware.
-
-The provided `scripts/docker-update.sh` script lets you update Pi-hole automatically with `cron`. It waits for Pi-hole to become healthy before reporting success and leaves Docker images untouched.
+Use `scripts/docker-update.sh` with `cron` to update both Pi-hole and `cloudflared`. It pulls the images configured in Compose, waits for Pi-hole to become healthy, and leaves old Docker images in place.
 
 1. If you want to change the update settings, copy `config/update.conf.example` to `config/update.conf`. Set `LOG_FILE` to the desired log path; relative paths are resolved from the project folder. The default is `cron/cron.log`, and its directory is created automatically.
-2. Run the script with the path to the folder that contains `docker-compose.yml`, for example: `./scripts/docker-update.sh "/path/to/pi-hole"`.
-3. If you want a backup before every update, set `BACKUP_BEFORE_UPDATE=true` in `config/update.conf` and configure `config/backup.conf` as described in [Backup](#backup). The updater calls `scripts/backup.sh` and cancels the update if the backup or Pi-hole restart fails. Make sure the cron user can run the backup's `sudo tar` command without an interactive password prompt.
-4. Add the script to `cron` for regular automatic updates >> `crontab -e`. A sample entry could look like this:
+2. Optional: Set `BACKUP_BEFORE_UPDATE=true` in `config/update.conf` and configure [Backup](#backup). The default is `false`. A failed backup or Pi-hole restart cancels the update. The cron user must be able to run the backup's `sudo tar` command without a password prompt.
+3. Test the updater manually with `./scripts/docker-update.sh "/path/to/pi-hole"`. Replace the path with the folder containing `docker-compose.yml`, then check the configured log for `Update successful!`.
+4. Open `crontab -e` and add an entry using your actual project path:
 
-```bash
-0 4 * * 0 /bin/bash /path/to/pi-hole/scripts/docker-update.sh /path/to/pi-hole
-```
+   ```cron
+   0 4 * * 0 /bin/bash /path/to/pi-hole/scripts/docker-update.sh /path/to/pi-hole
+   ```
 
-This will run the update once a week, on Sunday at 4:00 AM.
+This runs every Sunday at 4:00 AM in cron's configured time zone. Updates and backups can briefly interrupt DNS, so choose a time that suits your network.
 
-Deployment, backups, updates, provisioning, and cleanup share `.maintenance.lock` in the project folder. An overlapping run exits without changing the services. Deployment releases the lock after startup, before following logs. The lock is released when the process exits normally or receives an interrupt or termination signal. After a power loss or forced kill, remove the stale lock only after confirming no maintenance operation is still running. Direct Docker Compose commands do not use this lock.
+Deployment, backups, updates, provisioning, and cleanup share `.maintenance.lock` in the project folder. An overlapping run exits without changing the services. Deployment releases the lock after startup, before following logs. The other scripts release it when they exit normally or handle an interrupt or termination signal.
+
+After a power loss or forced kill, the lock may remain. Check the PID in `.maintenance.lock/pid` and confirm that no maintenance operation or child command is still running before removing the stale lock. Direct Docker Compose commands don't use this lock, so avoid running them during scripted maintenance.
 
 If upgrading from the old layout, move your existing `backup.conf` and `update.conf` into `config/` and update any cron entries to use `scripts/docker-update.sh`.
 
 ### Backup
 
-If you want to preserve Pi-hole configuration before updating or migrating, you can use the provided `scripts/backup.sh` script.
+Use `scripts/backup.sh` to save Pi-hole's data before an update, reset, or move to another server.
 
-1. Copy `config/backup.conf.example` to `config/backup.conf`.
+1. Copy the backup configuration:
+
+   ```bash
+   cp config/backup.conf.example config/backup.conf
+   ```
+
 2. Set `BACKUP_DIR` to the directory where you want your backup archive to be stored.
 3. Set `BACKUPED_DIRS` to the directories you want to archive. By default, these are the Pi-hole configuration folders that should be preserved. Relative paths are resolved from the project folder. Keep `BACKUP_DIR` outside those directories.
-4. Run the script with:
+4. Run the backup:
 
-```bash
-./scripts/backup.sh
-```
+   ```bash
+   ./scripts/backup.sh
+   ```
 
-The script briefly stops a running Pi-hole for a consistent backup and creates a timestamped `.tar.gz` archive with a unique suffix in the backup directory. Incomplete archives are removed on failure. Backups do not include `.env`, so copy it separately and keep it private.
+The script briefly stops Pi-hole so its files don't change while they're archived, then attempts to restart it even if the backup fails. A stopped Pi-hole is left stopped. Completed backups have a timestamp, a unique suffix, and a `.tar.gz` extension; incomplete archives are removed when the script handles a failure.
+
+By default, the archive contains `etc-pihole/` and `etc-dnsmasq.d/`, not `.env`. Copy `.env` separately and keep both it and your backups private. Before relying on a backup, inspect it with `tar -tzf /path/to/backup.tar.gz`, replacing the path with your archive.
 
 ### Migration
 
-If you need to move your Pi-hole setup to a new device or a new folder, you can do it in a few simple steps.
+Keep Pi-hole stopped on the destination until its data has been restored.
 
 1. Copy your Pi-hole folder, including `docker-compose.yml`, `.env`, `scripts/`, `config/`, and the backup archive, to the new machine. Set `LOCAL_IP` in `.env` to the new server's local-network address.
 2. Restore the backed up configuration directories to `etc-pihole/` and `etc-dnsmasq.d/` before starting Pi-hole. Changing backup settings does not change Docker's volume paths.
@@ -196,7 +235,7 @@ If you need to move your Pi-hole setup to a new device or a new folder, you can 
 
 ## The End
 
-Thank you very much for exploring my repository! It took me a lot of time and effort to deliver such a detailed guide with useful (I guess) scripts. I hope it was useful and easy to understand.
+Thanks for checking out my project! I hope the guide and scripts made your Pi-hole setup a little easier.
 
 To see more of my work, check out my:
 

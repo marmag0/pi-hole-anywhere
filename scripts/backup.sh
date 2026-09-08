@@ -3,7 +3,7 @@
 set -e
 umask 077
 
-# usage: log [*/!/-/+] {message}
+# Usage: log [*/!/-/+] "message"
 log() {
         local level="$1"
         local message="$2"
@@ -14,7 +14,7 @@ log() {
 
 log "*" "Starting backup process..."
 
-# Switching to project directory
+# Resolve relative paths from the project folder
 cd "$(dirname "$0")/.." || exit 1
 
 if [ ! -f "config/backup.conf" ]; then
@@ -75,6 +75,7 @@ for dir in "${BACKUPED_DIRS[@]}"; do
         exit 1
     fi
 done
+# Keep incomplete archives separate from completed .tar.gz files
 BACKUP_FILE=$(mktemp "${BACKUP_DIR}/backup_$(date +%F_%H-%M-%S).XXXXXX")
 
 PIHOLE_RUNNING=$(docker compose ps --status running -q pihole)

@@ -4,6 +4,7 @@ acquire_lock() {
     LOCK_DIR=".maintenance.lock"
     LOCK_OWNED=false
 
+    # Child scripts reuse the parent's lock without taking ownership
     if [ "${MAINTENANCE_LOCK_PID:-}" == "${PPID}" ] &&
         [ -f "${LOCK_DIR}/pid" ] &&
         [ "$(< "${LOCK_DIR}/pid")" == "${PPID}" ]; then

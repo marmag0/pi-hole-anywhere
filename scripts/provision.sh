@@ -2,7 +2,7 @@
 
 set -e
 
-# usage: log [*/!/-/+] {message}
+# Usage: log [*/!/-/+] "message"
 log() {
         local level="$1"
         local message="$2"

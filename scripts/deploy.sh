@@ -2,7 +2,7 @@
 
 set -e
 
-# usage: log [*/!/-/+] {message}
+# Usage: log [*/!/-/+] "message"
 log() {
         local level="$1"
         local message="$2"
@@ -13,24 +13,23 @@ log() {
 
 log "*" "Starting enhanced Pi-hole deployment..."
 
-# Switching to project directory
+# Resolve relative paths from the project folder
 cd "$(dirname "$0")/.." || exit 1
 log "*" "Checking all dependencies..."
 
-# Checking if the flag exists and it's correct
+# Accept only the optional detached-mode flag
 FLAG="${1:-}"
 if [ "$#" -gt 1 ] || [[ "${FLAG}" != "-d" && "${FLAG}" != "" ]]; then
 	log "!" "Error: Invalid arguments! Try '-d'."
 	exit 1
 fi
 
-# Checking if Docker is running and user have permissions to use it
+# Check Docker availability and permissions
 if ! docker info > /dev/null 2>&1; then
     log "!" "Error: Docker daemon is not running or you don't have permissions!"
     exit 1
 fi
 
-# Checking if docker-compose.yml is present in CWD of the script
 if [ ! -f "docker-compose.yml" ]; then
     log "!" "Error: Docker Compose file not found in $(pwd)!"
     exit 1
@@ -46,7 +45,7 @@ if ! docker compose config --quiet; then
     exit 1
 fi
 
-# Running Pi-hole using Docker
+# Hold the maintenance lock through provisioning and startup, not log following
 source ./scripts/maintenance.sh
 trap release_lock EXIT
 trap 'exit 130' INT

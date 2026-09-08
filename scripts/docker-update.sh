@@ -2,13 +2,9 @@
 
 set -e
 
-# ------------------- #
-# prerequisites check #
-# ------------------- #
-
 TARGET_DIR="${1:-}"
 
-# usage: log [*/!/-/+] {message}
+# Usage: log [*/!/-/+] "message"
 log() {
 	local level="$1"
 	local message="$2"
@@ -75,9 +71,7 @@ if [ "${BACKUP_BEFORE_UPDATE}" == "true" ]; then
 	fi
 fi
 
-# ------------- #
-# docker update #
-# ------------- #
+# Wait for startup before reporting a successful update
 
 log "*" "[${PROJECT_NAME}]: Starting docker update..."
 

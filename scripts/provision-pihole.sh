@@ -3,7 +3,9 @@
 set -e
 set -o pipefail
 
-# usage: log [*/!/-/+] {message}
+# Run inside the Pi-hole container through scripts/provision.sh
+
+# Usage: log [*/!/-/+] "message"
 log() {
         local level="$1"
         local message="$2"
@@ -101,6 +103,7 @@ logout
 log "*" "Updating Gravity..."
 pihole -g
 
+# Read the completed database because the API can lag behind Gravity's database swap
 LISTS=$(pihole-FTL sqlite3 -json /etc/pihole/gravity.db 'SELECT address,enabled,status FROM adlist WHERE type=0;')
 FAILED=false
 for address in "${BLOCKLISTS[@]}"; do

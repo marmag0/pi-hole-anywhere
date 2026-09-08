@@ -2,7 +2,7 @@
 
 set -e
 
-# usage: log [*/!/-/+] {message}
+# Usage: log [*/!/-/+] "message"
 log() {
         local level="$1"
         local message="$2"
@@ -13,17 +13,17 @@ log() {
 
 log "*" "Starting complete cleanup process..."
 
-# Switching to project directory
+# Resolve relative paths from the project folder
 cd "$(dirname "$0")/.." || exit 1
 log "*" "Checking all dependencies..."
 
-# Checking if docker-compose.yml is present in CWD of the script
+# Check that this is the project folder before allowing cleanup
 if [ ! -f "docker-compose.yml" ]; then
     log "!" "Error: Docker Compose file not found in $(pwd)!"
     exit 1
 fi
 
-# Getting confirmation from user
+# Require confirmation before deleting saved data
 OUTCOME=""
 echo "You are about to take down your Pi-hole with all its saved data!"
 echo "This operation is irreversible unless you've backed up your volume..."
@@ -34,7 +34,6 @@ case $ans in
 	* )                 OUTCOME="error" ;;
 esac
 
-# Taking action based on confirmation
 if [ "${OUTCOME}" == "no" ]; then
 	log "-" "Canceling cleanup process... Pi-hole not affected."
 	exit 1
@@ -48,7 +47,7 @@ else
 	exit 1
 fi
 
-# Stopping and removing Docker containers
+# Hold the maintenance lock until containers and saved data are removed
 source ./scripts/maintenance.sh
 trap release_lock EXIT
 trap 'exit 130' INT
@@ -57,7 +56,7 @@ acquire_lock
 log "*" "Removing Docker containers, networks and volumes..."
 docker compose down -v --remove-orphans
 
-# Removing volume files
+# Compose leaves bind-mounted data on the host
 log "*" "Removing any other volume files..."
 if [ -d "etc-pihole" ]; then
 	rm -rf etc-pihole

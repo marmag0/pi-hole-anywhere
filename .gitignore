@@ -1,21 +1,23 @@
-# Environment Variables & Secrets
+# Environment variables and secrets
 .env
 .env.local
 .env.*.local
 !.env.example
 
-# macOS Specific Files
+# macOS files
 .DS_Store
 .AppleDouble
 .LSOverride
 Icon_
 ._*
 
-# Files that might be created on external drives or network shares
+# External-drive and network-share metadata
 .Spotlight-V100
 .Trashes
 .VolumeIcon.icns
 .fseventsd
+
+# Pi-hole data and local maintenance files
 etc-pihole/
 etc-dnsmasq.d/
 backup/
@@ -23,11 +25,11 @@ backup.conf
 update.conf
 .maintenance.lock/
 
-# VS Code specific files
+# VS Code files
 .vscode/
 *.code-workspace
 
-# Docker desktop specific files
+# Docker Desktop files
 .docker/
 
 # Logs and temporary files
@@ -39,7 +41,7 @@ yarn-debug.log*
 yarn-error.log*
 .eslintcache
 
-# AI agents specific files
+# Local task files and tests
 AGENTS.md
 tasks.md
 tests/
